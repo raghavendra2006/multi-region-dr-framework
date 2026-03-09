@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+
+  primary_app:
+    build: ./app
+    container_name: primary_app
+    environment:
+      - DB_PATH=/data/primary/application.db
+    volumes:
+      - ./data/primary:/data/primary
+    ports:
+      - "5001:5000"
+
+  dr_app:
+    build: ./app
+    container_name: dr_app
+    environment:
+      - DB_PATH=/data/dr/application.db
+    volumes:
+      - ./data/dr:/data/dr
+    ports:
+      - "5002:5000"
+
+  primary_localstack:
+    image: localstack/localstack
+    container_name: primary_localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=${PRIMARY_REGION}
+
+  dr_localstack:
+    image: localstack/localstack
+    container_name: dr_localstack
+    ports:
+      - "4567:4566"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=${DR_REGION}
