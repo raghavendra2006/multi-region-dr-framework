@@ -29,16 +29,16 @@ This repository contains a proof-of-concept framework for testing active-passive
    docker-compose up -d primary_localstack dr_localstack
    
    # Wait a few seconds for LocalStack to boot, then run:
-   aws --endpoint-url=http://localhost:4566 s3 mb s3://primary-backups
-   aws --endpoint-url=http://localhost:4567 s3 mb s3://dr-backups
+   aws --endpoint-url=http://localhost:4566 s3 mb s3://my-app-backups-primary
+   aws --endpoint-url=http://localhost:4567 s3 mb s3://my-app-backups-dr
    ```
 
 ## Execution & Usage
 
 ### 1. Starting the Primary Infrastructure
-Bring up the LocalStack infrastructure and the active Primary Application:
+Bring up the LocalStack infrastructure and the active Primary Application. This command spins up both mock AWS regions and the primary Flask endpoint.
 ```bash
-docker-compose up -d primary_localstack dr_localstack primary_app
+docker-compose up -d --build primary_app primary_localstack dr_localstack
 ```
 
 ### 2. Compute Replication
@@ -48,27 +48,36 @@ bash ./scripts/replicate_compute.sh
 ```
 *(Note: Requires `docker login` prior to execution. Currently tagged for Docker Hub user `raghavendra76`.)*
 
-### 3. Failover Testing Workflow
-You can simulate a full disaster recovery scenario with the provided scripts or manual terminal commands:
+### 3. Failover Testing Workflow (End-to-End Test)
+You can simulate the complete disaster recovery scenario by writing data, invoking the automated shell scripts, causing a mock region failure, and successfully invoking the DR script.
 
 1. **Generate Mock Data:** 
+   Simulate active user traffic by injecting real data into the SQLite primary instance.
    ```bash
    curl -X POST http://localhost:5001/write
    ```
 2. **Execute Primary Backup:** 
-   Zip the `./data/primary/application.db` file and upload it to the `primary-backups` S3 bucket.
+   This script zips the `./data/primary/application.db` volume and uploads it to the `my-app-backups-primary` S3 bucket.
+   ```bash
+   bash ./scripts/backup.sh
+   ```
 3. **Replicate Storage:** 
-   Copy the newest `.gz` snapshot from the `primary-backups` S3 bucket to the `dr-backups` S3 bucket.
+   This script copies the newest `.gz` snapshot from the `my-app-backups-primary` S3 bucket directly into the `my-app-backups-dr` S3 bucket.
+   ```bash
+   bash ./scripts/replicate_storage.sh
+   ```
 4. **Simulate Catastrophic Outage:** 
+   Shut down the primary application to simulate a catastrophic hardware or region outage.
    ```bash
    docker-compose stop primary_app
    ```
 5. **Execute DR Runbook:** 
-   Download the snapshot from the DR bucket, uncompress it to `./data/dr/application.db`, and start the DR environment:
+   Run the overarching Disaster Recovery script. This will download the snapshot from the DR bucket, uncompress it to `./data/dr/application.db`, and provision the `dr_app` container replica.
    ```bash
-   docker-compose up -d dr_app
+   bash ./scripts/dr.sh --failover
    ```
 6. **Verify Restored Data:** 
+   Fetch the API records from the newly initialized DR environment. You should see the exact data records you generated before the crash!
    ```bash
    curl http://localhost:5002/data
    ```
