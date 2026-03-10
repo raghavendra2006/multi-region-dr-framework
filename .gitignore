@@ -1,0 +1,6 @@
+localstack_primary_volume/
+localstack_dr_volume/
+*.db
+*.db.gz
+*.sql.gz
+restore.gz
