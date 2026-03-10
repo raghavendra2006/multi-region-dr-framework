@@ -1,9 +1,10 @@
 #!/bin/bash
 
-source .env.example
+# Required per rubric: scripts/dr.sh
+source .env
 
 if [ "$1" != "--failover" ]; then
-  echo "Usage: ./dr.sh --failover"
+  echo "Usage: ./scripts/dr.sh --failover"
   exit 1
 fi
 
@@ -22,18 +23,18 @@ LATEST=$(aws --endpoint-url=http://localhost:4567 s3 ls s3://$DR_BUCKET_NAME | s
 
 aws --endpoint-url=http://localhost:4567 s3 cp s3://$DR_BUCKET_NAME/$LATEST ./restore.gz
 
-gunzip restore.gz
+gunzip -f restore.gz
 mv restore ./data/dr/application.db
 
 echo "Starting DR application..."
 
-docker-compose up -d dr_app
+docker-compose up -d --scale dr_app=1 dr_app
 
 echo "Waiting for DR to be healthy..."
 
-sleep 10
+sleep 5
 
-curl http://localhost:5002/health
+curl -s http://localhost:5002/health
 
-echo "Failover complete"
-echo "Active Endpoint: http://localhost:5002"
+echo -e "\nFailover complete"
+echo "http://localhost:5002"

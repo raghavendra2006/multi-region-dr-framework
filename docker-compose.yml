@@ -11,6 +11,11 @@ services:
       - ./data/primary:/data/primary
     ports:
       - "5001:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   dr_app:
     build: ./app
@@ -21,6 +26,8 @@ services:
       - ./data/dr:/data/dr
     ports:
       - "5002:5000"
+    deploy:
+      replicas: 0
 
   primary_localstack:
     image: localstack/localstack
@@ -28,8 +35,12 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3
+      - SERVICES=s3,ec2
       - DEFAULT_REGION=${PRIMARY_REGION}
+      - DEBUG=1
+    volumes:
+      - "./localstack_primary_volume:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
 
   dr_localstack:
     image: localstack/localstack
@@ -37,5 +48,9 @@ services:
     ports:
       - "4567:4566"
     environment:
-      - SERVICES=s3
+      - SERVICES=s3,ec2
       - DEFAULT_REGION=${DR_REGION}
+      - DEBUG=1
+    volumes:
+      - "./localstack_dr_volume:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"

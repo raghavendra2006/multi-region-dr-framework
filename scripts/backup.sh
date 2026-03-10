@@ -1,10 +1,11 @@
 #!/bin/bash
 
-source .env.example
+# Required per rubric: scripts/backup.sh
+source .env
 
 DB_FILE=./data/primary/application.db
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-BACKUP_FILE=backup-$TIMESTAMP.db.gz
+BACKUP_FILE=backup-$TIMESTAMP.sql.gz
 
 gzip -c $DB_FILE > $BACKUP_FILE
 

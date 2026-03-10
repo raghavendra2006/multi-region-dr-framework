@@ -20,32 +20,28 @@ def init_db():
     conn.commit()
     conn.close()
 
-@app.route('/health')
-def health():
-    return {"status":"ok"},200
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'ok'}), 200
 
 @app.route('/write', methods=['POST'])
-def write():
+def write_data():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    val=datetime.now().isoformat()
-    cursor.execute("INSERT INTO timestamps(value) VALUES(?)",(val,))
+    timestamp_val = datetime.now().isoformat()
+    cursor.execute('INSERT INTO timestamps (value) VALUES (?)', (timestamp_val,))
     conn.commit()
     conn.close()
-    return {"status":"success","written":val},201
+    return jsonify({'status': 'success', 'written': timestamp_val}), 201
 
-@app.route('/data')
-def data():
-    conn=sqlite3.connect(DB_PATH)
-    cursor=conn.cursor()
-    cursor.execute("SELECT value,created_at FROM timestamps ORDER BY id DESC")
-    rows=cursor.fetchall()
+@app.route('/data', methods=['GET'])
+def read_data():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT value, created_at FROM timestamps ORDER BY id DESC')
+    rows = cursor.fetchall()
     conn.close()
-
-    return jsonify([
-        {"value":r[0],"created_at":r[1]}
-        for r in rows
-    ])
+    return jsonify([{'value': row[0], 'created_at': row[1]} for row in rows])
     
 if __name__=="__main__":
     init_db()

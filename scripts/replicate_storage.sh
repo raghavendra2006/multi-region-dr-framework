@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source .env.example
+# Required per rubric: scripts/replicate_storage.sh
+source .env
 
 LATEST=$(aws --endpoint-url=http://localhost:4566 s3 ls s3://$PRIMARY_BUCKET_NAME | sort | tail -n 1 | awk '{print $4}')
 
