@@ -42,11 +42,10 @@ docker-compose up -d --build primary_app primary_localstack dr_localstack
 ```
 
 ### 2. Compute Replication
-Build the application image and push it to Docker Hub for DR availability:
+Simulate copying the application compute instance (AMI snapshot/container image) to the DR region. This step validates your Infrastructure-as-Code definitions:
 ```bash
 bash ./scripts/replicate_compute.sh
 ```
-*(Note: Requires `docker login` prior to execution. Currently tagged for Docker Hub user `raghavendra76`.)*
 
 ### 3. Failover Testing Workflow (End-to-End Test)
 You can simulate the complete disaster recovery scenario by writing data, invoking the automated shell scripts, causing a mock region failure, and successfully invoking the DR script.
