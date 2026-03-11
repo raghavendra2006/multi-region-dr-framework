@@ -23,20 +23,16 @@ This repository contains a proof-of-concept framework for testing active-passive
    ```bash
    cp .env.example .env
    ```
-2. Initialize the Infrastructure & Create the S3 Buckets:
-   Run the following commands to start LocalStack and create the mock AWS S3 buckets required for backups:
+2. Initialize the Infrastructure:
+   Run the following commands to start LocalStack and the application architecture. The mock AWS S3 buckets required for backups will be automatically provisioned on boot.
    ```bash
-   docker-compose up -d primary_localstack dr_localstack
-   
-   # Wait a few seconds for LocalStack to boot, then run:
-   aws --endpoint-url=http://localhost:4566 s3 mb s3://my-app-backups-primary
-   aws --endpoint-url=http://localhost:4567 s3 mb s3://my-app-backups-dr
+   docker-compose up -d --build primary_app primary_localstack dr_localstack
    ```
 
 ## Execution & Usage
 
 ### 1. Starting the Primary Infrastructure
-Bring up the LocalStack infrastructure and the active Primary Application. This command spins up both mock AWS regions and the primary Flask endpoint.
+Bring up the LocalStack infrastructure and the active Primary Application. This command spins up both mock AWS regions, automatically provisions the required cross-region S3 storage buckets, and starts the primary Flask endpoint.
 ```bash
 docker-compose up -d --build primary_app primary_localstack dr_localstack
 ```

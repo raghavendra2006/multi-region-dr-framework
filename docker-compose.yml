@@ -63,6 +63,7 @@ services:
     volumes:
       - "./localstack_primary_volume:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/init-primary.sh:/etc/localstack/init/ready.d/init-primary.sh"
 
   dr_localstack:
     image: localstack/localstack
@@ -79,3 +80,4 @@ services:
     volumes:
       - "./localstack_dr_volume:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/init-dr.sh:/etc/localstack/init/ready.d/init-dr.sh"
