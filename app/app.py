@@ -66,7 +66,9 @@ def write_data():
         return jsonify({"status": "success", "written": timestamp_val}), 201
     except Exception as e:
         logger.error(f"Failed to write data: {e}")
-        return jsonify({"status": "error", "message": "Internal Server Error"}), 500
+        return jsonify(
+            {"status": "error", "message": "Internal Server Error"}
+        ), 500
     finally:
         if conn:
             conn.close()
