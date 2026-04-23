@@ -1,20 +1,33 @@
 #!/bin/bash
+set -euo pipefail
 
-# Required per rubric: scripts/replicate_compute.sh
+# ---------------------------------------------------------------
+# scripts/replicate_compute.sh
+# Simulates compute replication by validating that the IaC
+# definitions for the DR region are present and correct.
+# In a real cloud environment, this would snapshot the primary
+# instance and register it in the DR region.
+# ---------------------------------------------------------------
 
-echo "Simulating Compute Replication..."
-echo "For this task, we assume the remote primary compute instance has been snapshotted."
+source .env
 
-echo "Verifying Infrastructure as Code configurations are ready for the DR Region..."
-# In a real cloud setup, we would run `terraform apply` here.
-# For this LocalStack simulation, our IaC main.tf defines aws_instance.dr_compute.
-# We will just validate that the instance mock is defined in the iac code:
-grep -q "aws_instance" "./iac/main.tf"
-if [ $? -eq 0 ]; then
-  echo "IaC configuration validated. DR compute instance definition exists."
+echo "INFO: Simulating Compute Replication..."
+echo "INFO: Verifying IaC definitions for DR region compute instance..."
+
+# Validate that the DR compute instance is defined in Terraform config
+if grep -q "aws_instance" "./iac/main.tf"; then
+    echo "INFO: IaC configuration validated — DR compute instance definition exists."
 else
-  echo "Error: IaC configuration for DR compute instance is missing in main.tf!"
-  exit 1
+    echo "ERROR: IaC configuration for DR compute instance is missing in main.tf!"
+    exit 1
 fi
 
-echo "Compute replication simulation completed successfully."
+# Validate DR provider alias exists
+if grep -q 'alias.*=.*"dr"' "./iac/main.tf"; then
+    echo "INFO: DR provider alias validated."
+else
+    echo "ERROR: DR provider alias not found in main.tf!"
+    exit 1
+fi
+
+echo "INFO: Compute replication simulation completed successfully."

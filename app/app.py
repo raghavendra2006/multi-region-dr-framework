@@ -48,7 +48,16 @@ def init_db():
 
 @app.route("/health", methods=["GET"])
 def health_check():
-    return jsonify({"status": "ok"}), 200
+    """Health check endpoint that verifies both app and DB connectivity."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        conn.close()
+        return jsonify({"status": "ok", "database": "connected"}), 200
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return jsonify({"status": "unhealthy", "database": "error"}), 503
 
 
 @app.route("/write", methods=["POST"])

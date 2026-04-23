@@ -1,6 +1,35 @@
+# Persistent data volumes
+data/
 localstack_primary_volume/
 localstack_dr_volume/
+
+# Database files
 *.db
-*.db.gz
+*.db-journal
+
+# Backup artifacts
 *.sql.gz
+*.db.gz
+*.sql
 restore.gz
+restore_backup.*
+tmp_replicate.gz
+
+# Environment secrets (use .env.example as template)
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Terraform state
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl

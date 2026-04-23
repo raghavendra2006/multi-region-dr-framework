@@ -5,6 +5,17 @@
 # hardcoding sensitive values.
 # ---------------------------------------------------------------
 
+terraform {
+  required_version = ">= 1.0.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # ---------------------
 # Variables
 # ---------------------
@@ -67,6 +78,12 @@ provider "aws" {
 # ---------------------
 resource "aws_s3_bucket" "primary_backup" {
   bucket = var.primary_bucket_name
+
+  tags = {
+    Name        = "Primary Backup Bucket"
+    Environment = "production"
+    Purpose     = "database-backups"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "primary_versioning" {
@@ -111,6 +128,12 @@ provider "aws" {
 resource "aws_s3_bucket" "dr_backup" {
   provider = aws.dr
   bucket   = var.dr_bucket_name
+
+  tags = {
+    Name        = "DR Backup Bucket"
+    Environment = "disaster-recovery"
+    Purpose     = "database-backups"
+  }
 }
 
 resource "aws_s3_bucket_versioning" "dr_versioning" {
@@ -133,4 +156,27 @@ resource "aws_instance" "dr_compute" {
     Environment = "disaster-recovery"
     Role        = "failover"
   }
+}
+
+# ---------------------
+# Outputs
+# ---------------------
+output "primary_bucket_id" {
+  description = "The ID of the primary S3 backup bucket"
+  value       = aws_s3_bucket.primary_backup.id
+}
+
+output "dr_bucket_id" {
+  description = "The ID of the DR S3 backup bucket"
+  value       = aws_s3_bucket.dr_backup.id
+}
+
+output "primary_instance_id" {
+  description = "The instance ID of the primary compute instance"
+  value       = aws_instance.primary_compute.id
+}
+
+output "dr_instance_id" {
+  description = "The instance ID of the DR compute instance"
+  value       = aws_instance.dr_compute.id
 }

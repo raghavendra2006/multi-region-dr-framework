@@ -16,6 +16,9 @@ services:
       - ./data/primary:/data/primary
     ports:
       - "5001:5000"
+    depends_on:
+      primary_localstack:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -45,6 +48,11 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   primary_localstack:
     image: localstack/localstack
@@ -57,11 +65,18 @@ services:
     environment:
       - SERVICES=s3,ec2
       - DEFAULT_REGION=${PRIMARY_REGION}
+      - PRIMARY_BUCKET_NAME=${PRIMARY_BUCKET_NAME}
+      - PRIMARY_REGION=${PRIMARY_REGION}
       - DEBUG=1
     volumes:
       - "./localstack_primary_volume:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./scripts/init-primary.sh:/etc/localstack/init/ready.d/init-primary.sh"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   dr_localstack:
     image: localstack/localstack
@@ -74,8 +89,15 @@ services:
     environment:
       - SERVICES=s3,ec2
       - DEFAULT_REGION=${DR_REGION}
+      - DR_BUCKET_NAME=${DR_BUCKET_NAME}
+      - DR_REGION=${DR_REGION}
       - DEBUG=1
     volumes:
       - "./localstack_dr_volume:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./scripts/init-dr.sh:/etc/localstack/init/ready.d/init-dr.sh"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
