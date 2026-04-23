@@ -32,4 +32,3 @@ __pycache__/
 *.tfstate
 *.tfstate.backup
 .terraform/
-.terraform.lock.hcl

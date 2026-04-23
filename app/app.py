@@ -17,7 +17,7 @@ DB_PATH = os.getenv("DB_PATH", "/data/application.db")
 
 def get_db_connection():
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
         conn.row_factory = sqlite3.Row
         return conn
     except sqlite3.Error as e:
@@ -50,7 +50,7 @@ def init_db():
 def health_check():
     """Health check endpoint that verifies both app and DB connectivity."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(DB_PATH, timeout=5)
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
         conn.close()
