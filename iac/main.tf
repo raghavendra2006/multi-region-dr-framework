@@ -1,7 +1,58 @@
+# ---------------------------------------------------------------
+# Multi-Region Disaster Recovery Infrastructure
+# Defines S3 buckets and EC2 compute for primary and DR regions.
+# Uses variables for credentials and configuration to avoid
+# hardcoding sensitive values.
+# ---------------------------------------------------------------
+
+# ---------------------
+# Variables
+# ---------------------
+variable "primary_region" {
+  description = "AWS region for primary resources"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "dr_region" {
+  description = "AWS region for disaster recovery resources"
+  type        = string
+  default     = "us-west-2"
+}
+
+variable "primary_bucket_name" {
+  description = "Name of the primary S3 backup bucket"
+  type        = string
+  default     = "my-app-backups-primary"
+}
+
+variable "dr_bucket_name" {
+  description = "Name of the DR S3 backup bucket"
+  type        = string
+  default     = "my-app-backups-dr"
+}
+
+variable "primary_ami" {
+  description = "AMI ID for the primary region EC2 instance (Amazon Linux 2)"
+  type        = string
+  default     = "ami-0c02fb55956c7d316" # Amazon Linux 2 AMI (us-east-1)
+}
+
+variable "dr_ami" {
+  description = "AMI ID for the DR region EC2 instance (Amazon Linux 2)"
+  type        = string
+  default     = "ami-0892d3c7ee96c0bf7" # Amazon Linux 2 AMI (us-west-2)
+}
+
+# ---------------------
+# Primary Region Provider
+# ---------------------
+# Credentials are sourced from environment variables or AWS CLI profile.
+# For LocalStack testing, set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+# environment variables instead of hardcoding them here.
 provider "aws" {
-  region                      = "us-east-1"
-  access_key                  = "test"
-  secret_key                  = "test"
+  region = var.primary_region
+
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
@@ -11,8 +62,11 @@ provider "aws" {
   }
 }
 
+# ---------------------
+# Primary S3 Bucket
+# ---------------------
 resource "aws_s3_bucket" "primary_backup" {
-  bucket = "my-app-backups-primary"
+  bucket = var.primary_bucket_name
 }
 
 resource "aws_s3_bucket_versioning" "primary_versioning" {
@@ -22,19 +76,26 @@ resource "aws_s3_bucket_versioning" "primary_versioning" {
   }
 }
 
+# ---------------------
+# Primary EC2 Compute Instance
+# ---------------------
 resource "aws_instance" "primary_compute" {
-  ami           = "ami-12345"
+  ami           = var.primary_ami
   instance_type = "t2.micro"
   tags = {
-    Name = "Primary Web App"
+    Name        = "Primary Web App"
+    Environment = "production"
+    Role        = "primary"
   }
 }
 
+# ---------------------
+# DR Region Provider
+# ---------------------
 provider "aws" {
-  alias                       = "dr"
-  region                      = "us-west-2"
-  access_key                  = "test"
-  secret_key                  = "test"
+  alias  = "dr"
+  region = var.dr_region
+
   skip_credentials_validation = true
   skip_metadata_api_check     = true
   skip_requesting_account_id  = true
@@ -44,9 +105,12 @@ provider "aws" {
   }
 }
 
+# ---------------------
+# DR S3 Bucket
+# ---------------------
 resource "aws_s3_bucket" "dr_backup" {
   provider = aws.dr
-  bucket   = "my-app-backups-dr"
+  bucket   = var.dr_bucket_name
 }
 
 resource "aws_s3_bucket_versioning" "dr_versioning" {
@@ -57,11 +121,16 @@ resource "aws_s3_bucket_versioning" "dr_versioning" {
   }
 }
 
+# ---------------------
+# DR EC2 Compute Instance
+# ---------------------
 resource "aws_instance" "dr_compute" {
   provider      = aws.dr
-  ami           = "ami-12345"
+  ami           = var.dr_ami
   instance_type = "t2.micro"
   tags = {
-    Name = "DR Web App"
+    Name        = "DR Web App"
+    Environment = "disaster-recovery"
+    Role        = "failover"
   }
 }
