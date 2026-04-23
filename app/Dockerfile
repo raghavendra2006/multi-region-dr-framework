@@ -21,5 +21,9 @@ ENV DB_PATH=/data/application.db
 
 EXPOSE 5000
 
+# Native Docker healthcheck for defense-in-depth
+HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
 # Use Gunicorn as the production application server
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--access-logfile", "-", "app:app"]
